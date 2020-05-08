@@ -24,6 +24,21 @@ from .util import *
 
 class FilamentManagerApi(octoprint.plugin.BlueprintPlugin):
 
+    @octoprint.plugin.BlueprintPlugin.route("/load/<int:tool>/<int:identifier>", methods=["GET"])
+    @restricted_access
+    def update_selection(self, identifier):
+        
+        if self._printer.is_printing():
+            return make_response("Trying to change filament while printing", 409)
+
+        try:
+            saved_selection = self.filamentManager.update_selection(tool, self.client_id, identifier)
+        except Exception as e:
+            self._logger.error("Failed to update selected spool for tool{tool}: {message}"
+                               .format(id=str(identifier), message=str(e)))
+            return make_response("Failed to update selected spool, see the log for more details", 500)
+
+    
     @octoprint.plugin.BlueprintPlugin.route("/profiles", methods=["GET"])
     def get_profiles_list(self):
         force = request.values.get("force", "false") in valid_boolean_trues
